@@ -1,5 +1,4 @@
 import React from 'react';
-import HomePage from './components/HomePage';
 import ImportTool from './components/ImportTool';
 import QuizApp from './components/QuizApp';
 import { Route, Routes } from 'react-router-dom';  // 引入 Router 所需要的部分

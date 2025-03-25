@@ -36,7 +36,6 @@ export default function WrongQuestionsPage() {
               (question) => question.question === item.question
             );
 
-            const options = questionData ? questionData.options : [];
 
             return (
               <li key={index} className="mb-4">
