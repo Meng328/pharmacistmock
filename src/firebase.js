@@ -1,7 +1,8 @@
 
 // firebase-config.js
-import firebase from 'firebase/app';
-import 'firebase/firestore';
+import { initializeApp } from "firebase/app"; // 初始化 Firebase
+import { getFirestore, collection, addDoc } from "firebase/firestore"; // 引入 Firestore 和 addDoc
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -19,7 +20,10 @@ const firebaseConfig = {
 };
 
 // 初始化 Firebase
-const firebaseApp = firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
-// 輸出 firestore 用來存取資料庫
-export const db = firebaseApp.firestore();
+// 獲取 Firestore 實例
+const db = getFirestore(app);
+
+// 導出 db 和 addDoc
+export { db, addDoc, collection };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, collection, addDoc, getDocs } from "../firebase"; // 引入 Firebase 配置
+import { db, collection, addDoc } from "../firebase"; // 引入 Firebase 配置
 
 const storedQuestionsKey = "customQuestions";
 
