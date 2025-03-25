@@ -77,6 +77,7 @@ export default function QuizPage() {
           (item) => item.chapter === chapter
         ),
         chapter: chapter,
+        subject: subject,
       },
     });
   };

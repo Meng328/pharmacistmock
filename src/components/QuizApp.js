@@ -41,11 +41,12 @@ export default function QuizApp() {
   };
 
   // 處理導航到錯題頁面
-  const handleNavigateToWrongQuestions = (chap) => {
+  const handleNavigateToWrongQuestions = (subj,chap) => {
     navigate("/wrong-questions", {
       state: {
         wrongQuestions: wrongQuestions.filter((item) => item.chapter === chap),
         chapter: chap,
+        subject: subj,
       },
     });
   };
@@ -95,7 +96,7 @@ export default function QuizApp() {
                             </button>
                             <button
                               onClick={() =>
-                                handleNavigateToWrongQuestions(chap)
+                                handleNavigateToWrongQuestions(subj,chap)
                               }
                               className="bg-red-500 text-white px-4 py-2 rounded"
                             >

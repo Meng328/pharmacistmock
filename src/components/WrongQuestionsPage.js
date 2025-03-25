@@ -10,10 +10,6 @@ export default function WrongQuestionsPage() {
     subject: "",
   };
 
-  // 取得所有題目數據
-  const questionsData = JSON.parse(
-    localStorage.getItem("customQuestions") || "{}"
-  );
 
   const goToHomePage = () => {
     navigate("/"); // 返回首頁路徑
@@ -27,7 +23,7 @@ export default function WrongQuestionsPage() {
       >
         回首頁
       </button>
-      <h2>{chapter} 章節的錯誤題目</h2>
+      <h2>{subject}{chapter} 的錯誤題目</h2>
       {wrongQuestions.length > 0 ? (
         <ul>
           {wrongQuestions.map((item, index) => {
