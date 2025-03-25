@@ -48,7 +48,7 @@ export default function ImportTool() {
 
     try {
       // 儲存至 Firestore (collection name: questions)
-      const docRef = await addDoc(collection(db, "questions"), newQuestion);
+      const docRef = await addDoc(collection(db, "(default)"), newQuestion);
       console.log("Document written with ID: ", docRef.id);
       alert("題目已儲存到 Firebase！");
     } catch (e) {
@@ -115,7 +115,8 @@ export default function ImportTool() {
         for (const subjectName in fileData) {
           for (const chapterName in fileData[subjectName]) {
             for (const questionData of fileData[subjectName][chapterName]) {
-              await addDoc(collection(db, "questions"), questionData);
+              // 將每個問題儲存到 Firebase
+              await addDoc(collection(db, "(default)"), questionData);
             }
           }
         }
