@@ -10,14 +10,14 @@ import QuizPage from './components/QuizPage'; // 測驗頁面
 
 function App() {
   return (
-    <div className="App">
+    <Router basename="/">
       <Routes>
         <Route path="/" element={<QuizApp />} />
         <Route path="/quiz/:subject/:chapter" element={<QuizPage />} /> {/* 測驗頁面 */}
         <Route path="/add-questions" element={<ImportTool />} />
         <Route path="/wrong-questions" element={<WrongQuestionsPage />} />
       </Routes>
-    </div>
+    </Router>
   );
 }
 
