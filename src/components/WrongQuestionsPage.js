@@ -32,9 +32,9 @@ export default function WrongQuestionsPage() {
         <ul>
           {wrongQuestions.map((item, index) => {
             // 取得當前錯誤題目的選項
-            const questionData = questionsData[subject]?.[chapter]?.find(
-              (question) => question.question === item.question
-            );
+            // const questionData = questionsData[subject]?.[chapter]?.find(
+            //   (question) => question.question === item.question
+            // );
 
 
             return (
