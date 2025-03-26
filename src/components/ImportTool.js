@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, collection, addDoc } from "../firebase"; // 引入 Firebase 配置
+import { db, collection, doc, setDoc } from "../firebase"; // 引入 Firebase 配置
 
 const storedQuestionsKey = "customQuestions";
 
@@ -32,73 +32,86 @@ export default function ImportTool() {
     setOptions(newOptions);
   };
 
-  // 儲存題目到 Firebase Firestore
-  const saveToFirebase = async () => {
-    if (!subject || !chapter || !question || !answer || !explanation) {
-      alert("請完整填寫題目、選項、答案和解析");
-      return;
-    }
+  // 儲存題目到 Firestore
+const saveToFirebase = async () => {
+  // 檢查是否有完整的題目資料
+  if (!subject || !chapter || !question || !answer || !explanation) {
+    alert("請完整填寫題目、選項、答案和解析");
+    return;
+  }
 
-    const newQuestion = {
-      question,
-      options,
-      answer,
-      explanation,
-    };
-
-    try {
-      // 儲存至 Firestore (collection name: questions)
-      const docRef = await addDoc(collection(db, "(default)"), newQuestion);
-      console.log("Document written with ID: ", docRef.id);
-      alert("題目已儲存到 Firebase！");
-    } catch (e) {
-      console.error("Error adding document: ", e);
-      alert("儲存 Firebase 失敗");
-    }
+  const newQuestion = {
+    question,
+    options,
+    answer,
+    explanation,
   };
 
-  // 儲存題目到 localStorage
-  const saveToLocalStorage = () => {
-    if (!subject || !chapter || !question || !answer || !explanation) {
-      alert("請完整填寫題目、選項、答案和解析");
-      return;
-    }
+  try {
+    // 儲存至 Firebase Firestore 的結構：科目 -> 章節 -> 問題
+    const subjectRef = doc(db, "subjects", subject);  // 科目資料夾
+    const chapterRef = doc(subjectRef, "chapters", chapter);  // 章節資料夾
+    const questionRef = doc(chapterRef, "questions", question);  // 問題資料
 
-    const newQuestion = {
-      question,
-      options,
-      answer,
-      explanation,
-    };
-
-    const questionsDataFromStorage = { ...existingData };
-
-    // 如果科目不存在，則新增科目
-    if (!questionsDataFromStorage[subject]) {
-      questionsDataFromStorage[subject] = {};
-    }
-
-    // 如果章節不存在，則新增章節
-    if (!questionsDataFromStorage[subject][chapter]) {
-      questionsDataFromStorage[subject][chapter] = [];
-    }
-
-    // 將新題目加入章節的題目列表
-    questionsDataFromStorage[subject][chapter].push(newQuestion);
-
-    // 儲存更新後的題庫資料到 localStorage
-    localStorage.setItem(storedQuestionsKey, JSON.stringify(questionsDataFromStorage));
-
-    // 清除表單並顯示成功訊息
+    // 使用 setDoc 將資料儲存到 Firestore
+    await setDoc(questionRef, newQuestion);
+    
     setQuestion("");
     setOptions(["", "", "", ""]);
     setAnswer("");
     setExplanation("");
     setConfirmSaved(true);
+    console.log("Document written with ID: ", questionRef.id);
+    alert("題目已儲存到 Firebase！");
 
-    console.log("Updated questionsData: ", questionsDataFromStorage);
-    alert("題目已儲存到 localStorage！");
-  };
+  } catch (e) {
+    console.error("Error adding document: ", e);
+    alert("儲存 Firebase 失敗");
+  }
+};
+
+  // 儲存題目到 localStorage
+  // const saveToLocalStorage = () => {
+  //   if (!subject || !chapter || !question || !answer || !explanation) {
+  //     alert("請完整填寫題目、選項、答案和解析");
+  //     return;
+  //   }
+
+  //   const newQuestion = {
+  //     question,
+  //     options,
+  //     answer,
+  //     explanation,
+  //   };
+
+  //   const questionsDataFromStorage = { ...existingData };
+
+  //   // 如果科目不存在，則新增科目
+  //   if (!questionsDataFromStorage[subject]) {
+  //     questionsDataFromStorage[subject] = {};
+  //   }
+
+  //   // 如果章節不存在，則新增章節
+  //   if (!questionsDataFromStorage[subject][chapter]) {
+  //     questionsDataFromStorage[subject][chapter] = [];
+  //   }
+
+  //   // 將新題目加入章節的題目列表
+  //   questionsDataFromStorage[subject][chapter].push(newQuestion);
+
+  //   // 儲存更新後的題庫資料到 localStorage
+  //   localStorage.setItem(storedQuestionsKey, JSON.stringify(questionsDataFromStorage));
+
+  //   // 清除表單並顯示成功訊息
+  //   setQuestion("");
+  //   setOptions(["", "", "", ""]);
+  //   setAnswer("");
+  //   setExplanation("");
+  //   setConfirmSaved(true);
+
+  //   console.log("Updated questionsData: ", questionsDataFromStorage);
+  //   alert("題目已儲存到 localStorage！");
+  // };
 
   // 上傳 JSON 檔案至 Firebase
   const handleFileUpload = async (e) => {
@@ -107,16 +120,27 @@ export default function ImportTool() {
       alert("請選擇一個 JSON 檔案");
       return;
     }
+
     const reader = new FileReader();
     reader.onload = async () => {
       try {
         const fileData = JSON.parse(reader.result);
-        // 儲存 JSON 資料到 Firebase
+        console.log(fileData)
+        // 儲存科目、章節及問題到 Firebase
         for (const subjectName in fileData) {
+          // 創建科目資料夾
+          const subjectRef = doc(collection(db, "subjects"), subjectName);
+          await setDoc(subjectRef, { name: subjectName });
+        
           for (const chapterName in fileData[subjectName]) {
+            // 創建章節資料夾，並設置為 "chapters" 子集合中的文檔
+            const chapterRef = doc(collection(subjectRef, "chapters"), chapterName);
+            await setDoc(chapterRef, { name: chapterName });
+        
             for (const questionData of fileData[subjectName][chapterName]) {
-              // 將每個問題儲存到 Firebase
-              await addDoc(collection(db, "(default)"), questionData);
+              // 儲存每個問題資料作為 "questions" 子集合中的文檔
+              const questionRef = doc(collection(chapterRef, "questions"));
+              await setDoc(questionRef, questionData);
             }
           }
         }
@@ -190,7 +214,7 @@ export default function ImportTool() {
         <textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="請輸入解析" />
       </div>
 
-      <button onClick={saveToLocalStorage} className="bg-blue-600 text-white px-4 py-2 rounded">保存題目</button>
+      {/* <button onClick={saveToLocalStorage} className="bg-blue-600 text-white px-4 py-2 rounded">保存題目</button> */}
 
       <button onClick={saveToFirebase} className="bg-green-600 text-white px-4 py-2 rounded ml-4">儲存至 Firebase</button>
 

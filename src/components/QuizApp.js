@@ -1,28 +1,79 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-const storedQuestionsKey = "customQuestions";
-const wrongQuestionsKey = "wrongQuestions";
+import { db, collection, getDocs } from "../firebase"; // 引入 Firebase 配置
 
 export default function QuizApp() {
-  const [subject, setSubject] = useState("");
-  const [chapter, setChapter] = useState("");
+  const [subject, setSubject] = useState(""); // 用來儲存用戶選擇的科目
+  const [chapter, setChapter] = useState(""); // 用來儲存用戶選擇的章節
   const [questionsData, setQuestionsData] = useState({});
   const [wrongQuestions, setWrongQuestions] = useState([]);
 
   const navigate = useNavigate();
+  
+  const fetchQuestionsData = async () => {
+    try {
+      console.log("Starting to fetch data from Firestore");
+      // const subjectsRef = collection(db, "subjects")
+      const questionsSnapshot = await getDocs(collection(db, "subjects")); // 取得科目集合
+      console.log("Got subjects snapshot:", questionsSnapshot);
+      const questions = {};
+      // 迭代每個科目文件
+      for (const subjectDoc of questionsSnapshot.docs) {
+        const subjectName = subjectDoc.id; // 科目名稱
+        const subjectData = subjectDoc.data(); // 科目資料
+        console.log(subjectDoc)
+        console.log(subjectName, subjectData);
 
-  // 當組件載入時，從 localStorage 讀取題目資料和錯題資料
+        questions[subjectName] = {};
+
+        // 讀取每個科目的章節
+        const chaptersSnapshot = await getDocs(collection(subjectDoc.ref, "chapters"));
+        
+        // 迭代每個章節
+        for (const chapterDoc of chaptersSnapshot.docs) {
+          const chapterName = chapterDoc.id;
+          const chapterData = chapterDoc.data();
+          questions[subjectName][chapterName] = [];
+          console.log(chapterName, chapterData);
+
+          // 讀取該章節下的問題
+          const questionsInChapterSnapshot = await getDocs(collection(chapterDoc.ref, "questions"));
+          questionsInChapterSnapshot.forEach((questionDoc) => {
+            const questionData = questionDoc.data();
+            console.log(questionData)
+            questions[subjectName][chapterName].push(questionData); // 將問題資料儲存到對應的章節
+          });
+        }
+      }
+
+      setQuestionsData(questions); // 設定資料到 state
+
+    } catch (error) {
+      console.error("Error fetching questions: ", error);
+    }
+  };
+  
+
+
   useEffect(() => {
-    const storedData = JSON.parse(
-      localStorage.getItem(storedQuestionsKey) || "{}"
-    );
-    const storedWrongQuestions = JSON.parse(
-      localStorage.getItem(wrongQuestionsKey) || "[]"
-    );
-    setQuestionsData(storedData);
-    setWrongQuestions(storedWrongQuestions);
-  }, []);
+    const fetchWrongQuestions = async () => {
+      try {
+        const wrongQuestionsSnapshot = await getDocs(
+          collection(db, "subjects", subject, "chapters", chapter, "wrongQuestions")
+        );
+        const wrongQuestionsData = [];
+        wrongQuestionsSnapshot.forEach((doc) => {
+          wrongQuestionsData.push(doc.data());
+        });
+        setWrongQuestions(wrongQuestionsData); // 設定錯誤的題目資料
+      } catch (error) {
+        console.error("Error fetching wrong questions: ", error);
+      }
+    };
+
+    fetchQuestionsData(); // 呼叫異步函數
+    fetchWrongQuestions();
+  }, [subject, chapter]); 
 
   // 處理科目選擇
   const handleSubjectSelection = (subj) => {
@@ -36,12 +87,12 @@ export default function QuizApp() {
   };
 
   // 處理導航到測驗頁面
-  const handleNavigateToQuiz = (subj,chap) => {
+  const handleNavigateToQuiz = (subj, chap) => {
     navigate(`/quiz/${subj}/${chap}`);
   };
 
   // 處理導航到錯題頁面
-  const handleNavigateToWrongQuestions = (subj,chap) => {
+  const handleNavigateToWrongQuestions = (subj, chap) => {
     navigate("/wrong-questions", {
       state: {
         wrongQuestions: wrongQuestions.filter((item) => item.chapter === chap),
@@ -96,7 +147,7 @@ export default function QuizApp() {
                             </button>
                             <button
                               onClick={() =>
-                                handleNavigateToWrongQuestions(subj,chap)
+                                handleNavigateToWrongQuestions(subj, chap)
                               }
                               className="bg-red-500 text-white px-4 py-2 rounded"
                             >
@@ -134,10 +185,10 @@ export default function QuizApp() {
   return (
     <div>
       {renderNavigation()}
-      <div className="mt-20">
+      {/* <div className="mt-20">
         <p>選擇的科目：{subject}</p>
         <p>選擇的章節：{chapter}</p>
-      </div>
+      </div> */}
     </div>
   );
 }
