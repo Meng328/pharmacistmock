@@ -103,72 +103,73 @@ export default function QuizApp() {
   };
 
   // 渲染固定橫向導覽列
-  const renderNavigation = () => {
-    return (
-      <div className="fixed top-0 left-0 w-full bg-blue-600 p-4 text-white z-50">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl">選擇科目和章節</h2>
-        </div>
-
-        <nav>
-          <ul className="space-x-10 mt-4 flex" id="nav">
-            {Object.keys(questionsData).map((subj) => (
-              <li key={subj} className="relative group px-6">
-                <button
-                  onClick={() => handleSubjectSelection(subj)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer"
-                >
-                  {subj}
-                </button>
-
-                {/* 章節選單，當游標懸停在科目上時顯示 */}
-                {
-                  <ul className="absolute left-0 mt-2 bg-white text-black shadow-md rounded w-40 p-2 group-hover:block opacity-0 group-hover:opacity-100 visibility-hidden group-hover:visible transition-all duration-300">
-                    {Object.keys(questionsData[subj]).map((chap) => (
-                      <li key={chap} className="mb-2">
-                        <button
-                          onClick={() => handleChapterSelection(chap)}
-                          className="block w-full text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 cursor-pointer"
-                        >
-                          <div className="block">{chap}</div>{" "}
-                          {/* 顯示章節名稱並換行 */}
-                          <div className="text-sm text-gray-500">
-                            {questionsData[subj][chap].length} 題
-                          </div>{" "}
-                          {/* 顯示題數，顯示在下一行 */}
-                        </button>
-                        {chapter === chap && (
-                          <div className="mt-2 flex space-x-2">
-                            <button
-                              onClick={() => handleNavigateToQuiz(subj, chap)}
-                              className="bg-yellow-500 text-white px-4 py-2 rounded"
-                            >
-                              測驗
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleNavigateToWrongQuestions(subj, chap)
-                              }
-                              className="bg-red-500 text-white px-4 py-2 rounded"
-                            >
-                              錯題
-                            </button>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                }
-              </li>
-            ))}
-            <li className="bg-blue-600 text-white px-6 py-2 rounded cursor-pointer">
-              <a href="/add-questions">新增題目</a>
-            </li>
-          </ul>
-        </nav>
+const renderNavigation = () => {
+  return (
+    <div className="fixed top-0 left-0 w-full bg-blue-600 p-4 text-white z-50">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl">選擇科目和章節</h2>
       </div>
-    );
-  };
+
+      <nav>
+        <ul className="space-x-10 mt-4 flex" id="nav">
+          {Object.keys(questionsData).map((subj) => (
+            <li key={subj} className="relative group px-6">
+              <button
+                onClick={() => handleSubjectSelection(subj)}
+                className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer"
+              >
+                {subj}
+              </button>
+
+              {/* 章節選單，當游標懸停在科目上時顯示 */}
+              {
+                <ul className="absolute left-0 mt-2 bg-white text-black shadow-md rounded w-40 p-2 group-hover:block opacity-0 group-hover:opacity-100 visibility-hidden group-hover:visible transition-all duration-300 max-h-60 overflow-y-auto">
+                  {Object.keys(questionsData[subj]).map((chap) => (
+                    <li key={chap} className="mb-2">
+                      <button
+                        onClick={() => handleChapterSelection(chap)}
+                        className="block w-full text-left px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 cursor-pointer"
+                      >
+                        <div className="block">{chap}</div>{" "}
+                        {/* 顯示章節名稱並換行 */}
+                        <div className="text-xs text-gray-500">
+                          {questionsData[subj][chap].length} 題
+                        </div>{" "}
+                        {/* 顯示題數，顯示在下一行 */}
+                      </button>
+                      {chapter === chap && (
+                        <div className="mt-2 flex space-x-2">
+                          <button
+                            onClick={() => handleNavigateToQuiz(subj, chap)}
+                            className="bg-yellow-500 text-white text-sm px-4 py-2 rounded"
+                          >
+                            測驗
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleNavigateToWrongQuestions(subj, chap)
+                            }
+                            className="bg-red-500 text-white text-sm px-4 py-2 rounded"
+                          >
+                            錯題
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              }
+            </li>
+          ))}
+          <li className="bg-blue-600 text-white px-6 py-2 rounded cursor-pointer">
+            <a href="/add-questions">新增題目</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  );
+};
+
 
   // 如果科目或章節未選擇，顯示選擇科目和章節的按鈕
   if (!subject || !chapter) {

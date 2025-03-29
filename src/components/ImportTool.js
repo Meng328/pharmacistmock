@@ -33,123 +33,84 @@ export default function ImportTool() {
   };
 
   // 儲存題目到 Firestore
-const saveToFirebase = async () => {
-  // 檢查是否有完整的題目資料
-  if (!subject || !chapter || !question || !answer || !explanation) {
-    alert("請完整填寫題目、選項、答案和解析");
-    return;
-  }
-
-  const newQuestion = {
-    question,
-    options,
-    answer,
-    explanation,
-  };
-
-  try {
-    // 儲存至 Firebase Firestore 的結構：科目 -> 章節 -> 問題
-    const subjectRef = doc(db, "subjects", subject);  // 科目資料夾
-    const chapterRef = doc(subjectRef, "chapters", chapter);  // 章節資料夾
-    const questionRef = doc(chapterRef, "questions", question);  // 問題資料
-
-    // 使用 setDoc 將資料儲存到 Firestore
-    await setDoc(questionRef, newQuestion);
-    
-    setQuestion("");
-    setOptions(["", "", "", ""]);
-    setAnswer("");
-    setExplanation("");
-    setConfirmSaved(true);
-    console.log("Document written with ID: ", questionRef.id);
-    alert("題目已儲存到 Firebase！");
-
-  } catch (e) {
-    console.error("Error adding document: ", e);
-    alert("儲存 Firebase 失敗");
-  }
-};
-
-  // 儲存題目到 localStorage
-  // const saveToLocalStorage = () => {
-  //   if (!subject || !chapter || !question || !answer || !explanation) {
-  //     alert("請完整填寫題目、選項、答案和解析");
-  //     return;
-  //   }
-
-  //   const newQuestion = {
-  //     question,
-  //     options,
-  //     answer,
-  //     explanation,
-  //   };
-
-  //   const questionsDataFromStorage = { ...existingData };
-
-  //   // 如果科目不存在，則新增科目
-  //   if (!questionsDataFromStorage[subject]) {
-  //     questionsDataFromStorage[subject] = {};
-  //   }
-
-  //   // 如果章節不存在，則新增章節
-  //   if (!questionsDataFromStorage[subject][chapter]) {
-  //     questionsDataFromStorage[subject][chapter] = [];
-  //   }
-
-  //   // 將新題目加入章節的題目列表
-  //   questionsDataFromStorage[subject][chapter].push(newQuestion);
-
-  //   // 儲存更新後的題庫資料到 localStorage
-  //   localStorage.setItem(storedQuestionsKey, JSON.stringify(questionsDataFromStorage));
-
-  //   // 清除表單並顯示成功訊息
-  //   setQuestion("");
-  //   setOptions(["", "", "", ""]);
-  //   setAnswer("");
-  //   setExplanation("");
-  //   setConfirmSaved(true);
-
-  //   console.log("Updated questionsData: ", questionsDataFromStorage);
-  //   alert("題目已儲存到 localStorage！");
-  // };
-
-  // 上傳 JSON 檔案至 Firebase
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-      alert("請選擇一個 JSON 檔案");
+  const saveToFirebase = async () => {
+    // 檢查是否有完整的題目資料
+    if (!subject || !chapter || !question || !answer || !explanation) {
+      alert("請完整填寫題目、選項、答案和解析");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const fileData = JSON.parse(reader.result);
-        console.log(fileData)
-        // 儲存科目、章節及問題到 Firebase
-        for (const subjectName in fileData) {
-          // 創建科目資料夾
-          const subjectRef = doc(collection(db, "subjects"), subjectName);
-          await setDoc(subjectRef, { name: subjectName });
-        
-          for (const chapterName in fileData[subjectName]) {
-            // 創建章節資料夾，並設置為 "chapters" 子集合中的文檔
-            const chapterRef = doc(collection(subjectRef, "chapters"), chapterName);
-            await setDoc(chapterRef, { name: chapterName });
-        
-            for (const questionData of fileData[subjectName][chapterName]) {
-              // 儲存每個問題資料作為 "questions" 子集合中的文檔
-              const questionRef = doc(collection(chapterRef, "questions"));
-              await setDoc(questionRef, questionData);
+    const newQuestion = {
+      question,
+      options,
+      answer,
+      explanation,
+    };
+
+    try {
+      // 儲存至 Firebase Firestore 的結構：科目 -> 章節 -> 問題
+      const subjectRef = doc(db, "subjects", subject);  // 科目資料夾
+      const chapterRef = doc(subjectRef, "chapters", chapter);  // 章節資料夾
+      const questionRef = doc(chapterRef, "questions", question);  // 問題資料
+
+      // 使用 setDoc 將資料儲存到 Firestore
+      await setDoc(questionRef, newQuestion);
+      
+      setQuestion("");
+      setOptions(["", "", "", ""]);
+      setAnswer("");
+      setExplanation("");
+      setConfirmSaved(true);
+      console.log("Document written with ID: ", questionRef.id);
+      alert("題目已儲存到 Firebase！");
+
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      alert("儲存 Firebase 失敗");
+    }
+  };
+
+  // 上傳資料夾中的多個 JSON 檔案至 Firebase
+  const handleFolderUpload = async (e) => {
+    const files = e.target.files;
+    if (!files.length) {
+      alert("請選擇至少一個 JSON 檔案");
+      return;
+    }
+
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const fileData = JSON.parse(reader.result);
+          console.log("Processing file: ", file.name);
+
+          // 儲存科目、章節及問題到 Firebase
+          for (const subjectName in fileData) {
+            // 創建科目資料夾
+            const subjectRef = doc(collection(db, "subjects"), subjectName);
+            await setDoc(subjectRef, { name: subjectName });
+          
+            for (const chapterName in fileData[subjectName]) {
+              // 創建章節資料夾，並設置為 "chapters" 子集合中的文檔
+              const chapterRef = doc(collection(subjectRef, "chapters"), chapterName);
+              await setDoc(chapterRef, { name: chapterName });
+          
+              for (const questionData of fileData[subjectName][chapterName]) {
+                // 儲存每個問題資料作為 "questions" 子集合中的文檔
+                const questionRef = doc(collection(chapterRef, "questions"));
+                await setDoc(questionRef, questionData);
+              }
             }
           }
+          // alert(`檔案 ${file.name} 已成功上傳至 Firebase！`);
+        } catch (error) {
+          alert("上傳 JSON 檔案失敗: " + error.message);
         }
-        alert("JSON 檔案已成功上傳至 Firebase！");
-      } catch (error) {
-        alert("上傳 JSON 檔案失敗: " + error.message);
-      }
-    };
-    reader.readAsText(file);
+      };
+      reader.readAsText(file);
+    }
+    alert(`全部檔案已成功上傳至 Firebase！`);
   };
 
   return (
@@ -158,8 +119,8 @@ const saveToFirebase = async () => {
 
       <h2 className="text-xl font-bold mb-4">新增題目</h2>
 
-      {/* 上傳 JSON 檔案 */}
-      <input type="file" accept="application/JSON" onChange={handleFileUpload} className="mb-4" />
+      {/* 上傳 JSON 檔案，允許選擇資料夾 */}
+      <input type="file" accept="application/JSON" onChange={handleFolderUpload} multiple webkitdirectory className="mb-4" />
 
       {/* 選擇科目 */}
       <div className="mb-4">
@@ -213,8 +174,6 @@ const saveToFirebase = async () => {
         <label className="block font-semibold">解析</label>
         <textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="請輸入解析" />
       </div>
-
-      {/* <button onClick={saveToLocalStorage} className="bg-blue-600 text-white px-4 py-2 rounded">保存題目</button> */}
 
       <button onClick={saveToFirebase} className="bg-green-600 text-white px-4 py-2 rounded ml-4">儲存至 Firebase</button>
 
