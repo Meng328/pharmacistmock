@@ -18,11 +18,9 @@ export default function QuizPage() {
   // 讀取題目資料
   const fetchQuestionsData = async () => {
     try {
-      console.log("Starting to fetch data from Firestore");
-
       const questions = {};
 
-      const subjectsSnapshot = await getDocs(collection(db, "subjects"));
+      const subjectsSnapshot = await getDocs(collection(db, "subjects", subject, "chapters", chapter, "wrongQuestions"));
       console.log("Got subjects snapshot:", subjectsSnapshot);
 
       // 使用 for...of 來處理每個科目，並確保每次的異步操作完成後再進行下一步

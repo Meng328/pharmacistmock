@@ -111,7 +111,7 @@ const renderNavigation = () => {
       </div>
 
       <nav>
-        <ul className="space-x-10 mt-4 flex" id="nav">
+        <ul className="mt-4 flex justify-between w-full space-x-10" id="nav">
           {Object.keys(questionsData).map((subj) => (
             <li key={subj} className="relative group px-6">
               <button
@@ -161,7 +161,7 @@ const renderNavigation = () => {
               }
             </li>
           ))}
-          <li className="bg-blue-600 text-white px-6 py-2 rounded cursor-pointer">
+          <li className="bg-blue-600 text-white px-6 py-2 rounded cursor-pointer ml-auto">
             <a href="/add-questions">新增題目</a>
           </li>
         </ul>
