@@ -10,44 +10,72 @@ export default function QuizApp() {
 
   const navigate = useNavigate();
   
+  // const fetchQuestionsData = async () => {
+  //   try {
+  //     // console.log("Starting to fetch data from Firestore");
+  //     // const subjectsRef = collection(db, "subjects")
+  //     const questionsSnapshot = await getDocs(collection(db, "subjects")); // 取得科目集合
+  //     // console.log("Got subjects snapshot:", questionsSnapshot);
+  //     const questions = {};
+  //     // 迭代每個科目文件
+  //     for (const subjectDoc of questionsSnapshot.docs) {
+  //       const subjectName = subjectDoc.id; // 科目名稱
+  //       const subjectData = subjectDoc.data(); // 科目資料
+  //       console.log(subjectDoc)
+  //       console.log(subjectName, subjectData);
+
+  //       questions[subjectName] = {};
+
+  //       // 讀取每個科目的章節
+  //       const chaptersSnapshot = await getDocs(collection(subjectDoc.ref, "chapters"));
+        
+  //       // 迭代每個章節
+  //       for (const chapterDoc of chaptersSnapshot.docs) {
+  //         const chapterName = chapterDoc.id;
+  //         const chapterData = chapterDoc.data();
+  //         questions[subjectName][chapterName] = [];
+  //         console.log(chapterName, chapterData);
+
+  //         // 讀取該章節下的問題
+  //         const questionsInChapterSnapshot = await getDocs(collection(chapterDoc.ref, "questions"));
+  //         questionsInChapterSnapshot.forEach((questionDoc) => {
+  //           const questionData = questionDoc.data();
+  //           console.log(questionData)
+  //           questions[subjectName][chapterName].push(questionData); // 將問題資料儲存到對應的章節
+  //         });
+  //       }
+  //     }
+
+  //     setQuestionsData(questions); // 設定資料到 state
+
+  //   } catch (error) {
+  //     console.error("Error fetching questions: ", error);
+  //   }
+  // };
   const fetchQuestionsData = async () => {
     try {
-      console.log("Starting to fetch data from Firestore");
-      // const subjectsRef = collection(db, "subjects")
-      const questionsSnapshot = await getDocs(collection(db, "subjects")); // 取得科目集合
-      console.log("Got subjects snapshot:", questionsSnapshot);
+      const questionsSnapshot = await getDocs(collection(db, "subjects"));
       const questions = {};
-      // 迭代每個科目文件
-      for (const subjectDoc of questionsSnapshot.docs) {
-        const subjectName = subjectDoc.id; // 科目名稱
-        const subjectData = subjectDoc.data(); // 科目資料
-        console.log(subjectDoc)
-        console.log(subjectName, subjectData);
-
+  
+      // 處理所有 subject 的 Promise
+      const subjectPromises = questionsSnapshot.docs.map(async (subjectDoc) => {
+        const subjectName = subjectDoc.id;
         questions[subjectName] = {};
-
-        // 讀取每個科目的章節
+  
+        // 平行處理章節
         const chaptersSnapshot = await getDocs(collection(subjectDoc.ref, "chapters"));
-        
-        // 迭代每個章節
-        for (const chapterDoc of chaptersSnapshot.docs) {
+  
+        const chapterPromises = chaptersSnapshot.docs.map(async (chapterDoc) => {
           const chapterName = chapterDoc.id;
-          const chapterData = chapterDoc.data();
-          questions[subjectName][chapterName] = [];
-          console.log(chapterName, chapterData);
-
-          // 讀取該章節下的問題
           const questionsInChapterSnapshot = await getDocs(collection(chapterDoc.ref, "questions"));
-          questionsInChapterSnapshot.forEach((questionDoc) => {
-            const questionData = questionDoc.data();
-            console.log(questionData)
-            questions[subjectName][chapterName].push(questionData); // 將問題資料儲存到對應的章節
-          });
-        }
-      }
-
-      setQuestionsData(questions); // 設定資料到 state
-
+          questions[subjectName][chapterName] = questionsInChapterSnapshot.docs.map(doc => doc.data());
+        });
+  
+        await Promise.all(chapterPromises);
+      });
+  
+      await Promise.all(subjectPromises);
+      setQuestionsData(questions);
     } catch (error) {
       console.error("Error fetching questions: ", error);
     }
@@ -111,7 +139,8 @@ const renderNavigation = () => {
       </div>
 
       <nav>
-        <ul className="mt-4 flex justify-between w-full space-x-10" id="nav">
+      <ul className="mt-4 flex justify-between w-full space-x-10 whitespace-nowrap px-2 scrollbar-hide sm:block lg:flex lg:space-x-10" id="nav">
+      {/* <ul className="mt-4 flex w-full space-x-4 overflow-x-auto whitespace-nowrap px-2 scrollbar-hide sm:block lg:flex lg:space-x-10" id="nav"> */}
           {Object.keys(questionsData).map((subj) => (
             <li key={subj} className="relative group px-6">
               <button
@@ -123,7 +152,8 @@ const renderNavigation = () => {
 
               {/* 章節選單，當游標懸停在科目上時顯示 */}
               {
-                <ul className="absolute left-0 mt-2 bg-white text-black shadow-md rounded w-40 p-2 group-hover:block opacity-0 group-hover:opacity-100 visibility-hidden group-hover:visible transition-all duration-300 max-h-60 overflow-y-auto">
+                <ul className="absolute left-0 mt-2 bg-white text-black shadow-md rounded w-40 p-2 group-hover:block opacity-0 group-hover:opacity-100 visibility-hidden group-hover:visible transition-all duration-300 max-h-60 overflow-y-auto z-100">
+
                   {Object.keys(questionsData[subj]).map((chap) => (
                     <li key={chap} className="mb-2">
                       <button

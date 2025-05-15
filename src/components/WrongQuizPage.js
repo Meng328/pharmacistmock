@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getDocs, collection, doc, setDoc } from "firebase/firestore"; // 引入 Firebase 方法
 import { db } from "../firebase"; // 假設 db 是您 Firebase 配置中的實例
 
 export default function QuizPage() {
-  const { subject, chapter } = useParams();
+  const location = useLocation();
+  // const { subject, chapter } = useParams();
   const navigate = useNavigate();
+  const { chapter, subject } = location.state || { chapter: "", subject: "" };
+  const [loading, setLoading] = useState(true);
 
   const [questionsData, setQuestionsData] = useState({});
   const [wrongQuestions, setWrongQuestions] = useState([]);
@@ -14,53 +17,34 @@ export default function QuizPage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [quizFinished, setQuizFinished] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false); // 用來標記是否回答正確
+  
 
   // 讀取題目資料
   const fetchQuestionsData = async () => {
     try {
-      const questions = {};
+      setLoading(true);
 
-      const subjectsSnapshot = await getDocs(collection(db, "subjects", subject, "chapters", chapter, "wrongQuestions"));
-      console.log("Got subjects snapshot:", subjectsSnapshot);
+      // 從指定的科目和章節讀取 wrongQuestions 集合
+      const wrongQuestionsSnapshot = await getDocs(
+        collection(db, "subjects", subject, "chapters", chapter, "wrongQuestions")
+      );
 
-      // 使用 for...of 來處理每個科目，並確保每次的異步操作完成後再進行下一步
-      for (const subjectDoc of subjectsSnapshot.docs) {
-        const subjectName = subjectDoc.id; // 科目名稱
-        questions[subjectName] = {}; // 初始化科目
+      const wrongQuestionsData = [];
+      wrongQuestionsSnapshot.forEach((doc) => {
+        wrongQuestionsData.push(doc.data()); // 將錯誤題目資料儲存至陣列
+      });
 
-        // 讀取每個科目的章節
-        const chaptersSnapshot = await getDocs(
-          collection(subjectDoc.ref, "chapters")
-        );
-
-        // 使用 for...of 來處理每個章節
-        for (const chapterDoc of chaptersSnapshot.docs) {
-          const chapterName = chapterDoc.id; // 章節名稱
-          questions[subjectName][chapterName] = { questions: [] }; // 初始化章節內的問題數組
-
-          // 讀取該章節下的問題
-          const questionsInChapterSnapshot = await getDocs(
-            collection(chapterDoc.ref, "questions")
-          );
-
-          // 迭代每個問題並將其加入章節
-          for (const questionDoc of questionsInChapterSnapshot.docs) {
-            const questionData = questionDoc.data();
-            questionData.id = questionDoc.id;
-            questions[subjectName][chapterName].questions.push(questionData); // 添加問題資料
-          }
-        }
-      }
-
-      setQuestionsData(questions); // 設定資料到 state
+      setQuestionsData(wrongQuestionsData); // 設定錯誤的題目資料
+      setLoading(false);
     } catch (error) {
-      console.error("Error fetching questions: ", error);
+      console.error("Error fetching wrong questions: ", error);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchQuestionsData();
-  }, []);
+  }, [subject, chapter]);
 
   // 檢查答案並儲存錯誤題目
   const checkAnswer = async (option) => {
@@ -169,34 +153,35 @@ export default function QuizPage() {
   };
   
   // 設定章節完成
-  const handleCompleteChapter = (subj, chap) => {
-    const updatedQuestionsData = { ...questionsData };
-    updatedQuestionsData[subj][chap].isCompleted = true; // 設定章節為完成
-    setQuestionsData(updatedQuestionsData); // 更新狀態
-    // 可以選擇將章節完成狀態儲存在 Firebase
-    saveChapterCompletionStatus(subj, chap);
-  };
+  // const handleCompleteChapter = (subj, chap) => {
+  //   const updatedQuestionsData = { ...questionsData };
+  //   updatedQuestionsData[subj][chap].isCompleted = true; // 設定章節為完成
+  //   setQuestionsData(updatedQuestionsData); // 更新狀態
+  //   // 可以選擇將章節完成狀態儲存在 Firebase
+  //   saveChapterCompletionStatus(subj, chap);
+  // };
 
-  const saveChapterCompletionStatus = async (subj, chap) => {
-    try {
-      const chapterRef = doc(db, "subjects", subj, "chapters", chap);
-      await setDoc(chapterRef, { isCompleted: true }, { merge: true });
-      console.log(`Chapter ${chap} completed and saved to Firestore.`);
-    } catch (error) {
-      console.error("Error saving chapter completion status:", error);
-    }
-  };
+  // const saveChapterCompletionStatus = async (subj, chap) => {
+  //   try {
+  //     const chapterRef = doc(db, "subjects", subj, "chapters", chap);
+  //     await setDoc(chapterRef, { isCompleted: true }, { merge: true });
+  //     console.log(`Chapter ${chap} completed and saved to Firestore.`);
+  //   } catch (error) {
+  //     console.error("Error saving chapter completion status:", error);
+  //   }
+  // };
 
-  const handleCompleteTest = () => {
-    setQuizFinished(true);
-    handleCompleteChapter(subject, chapter);
-  };
+  // const handleCompleteTest = () => {
+  //   setQuizFinished(true);
+  //   handleCompleteChapter(subject, chapter);
+  // };
 
+  const currentQuestion = questionsData[currentIndex];
+  const totalQuestions = questionsData.length;
+  // const currentQuestion =
+  //   questionsData[subject]?.[chapter]?.questions?.[currentIndex];
 
-  const currentQuestion =
-    questionsData[subject]?.[chapter]?.questions?.[currentIndex];
-
-  const totalQuestions = questionsData[subject]?.[chapter]?.questions?.length;
+  // const totalQuestions = questionsData[subject]?.[chapter]?.questions?.length;
 
   return (
     <div>
@@ -212,9 +197,11 @@ export default function QuizPage() {
         <p>
           第 {currentIndex + 1} 題 / 共 {totalQuestions} 題
         </p>
-
-        {!quizFinished ? (
-          <>
+        {loading ? (
+          <p>正在加載錯誤題目...</p>
+        ) : questionsData.length > 0 ?(
+          !quizFinished ? (
+            <>
             <div>
               <h2>{currentIndex + 1}.</h2>
               <p>{currentQuestion?.question}</p>
@@ -267,8 +254,8 @@ export default function QuizPage() {
                 }, 1000) // 1秒後自動跳到下一題
               )} */}
             </div>
-          </>
-        ) : (
+            </>
+          ) : (
           <div>
             <h3>恭喜你完成了所有題目！</h3>
             <button
@@ -284,6 +271,9 @@ export default function QuizPage() {
               回首頁
             </button>
           </div>
+          )
+        ) : (
+          <p>目前沒有錯誤題目。</p>
         )}
       </div>
     </div>

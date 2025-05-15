@@ -171,28 +171,28 @@ export default function QuizPage() {
   };
   
   // 設定章節完成
-  const handleCompleteChapter = (subj, chap) => {
-    const updatedQuestionsData = { ...questionsData };
-    updatedQuestionsData[subj][chap].isCompleted = true; // 設定章節為完成
-    setQuestionsData(updatedQuestionsData); // 更新狀態
-    // 可以選擇將章節完成狀態儲存在 Firebase
-    saveChapterCompletionStatus(subj, chap);
-  };
+  // const handleCompleteChapter = (subj, chap) => {
+  //   const updatedQuestionsData = { ...questionsData };
+  //   updatedQuestionsData[subj][chap].isCompleted = true; // 設定章節為完成
+  //   setQuestionsData(updatedQuestionsData); // 更新狀態
+  //   // 可以選擇將章節完成狀態儲存在 Firebase
+  //   saveChapterCompletionStatus(subj, chap);
+  // };
 
-  const saveChapterCompletionStatus = async (subj, chap) => {
-    try {
-      const chapterRef = doc(db, "subjects", subj, "chapters", chap);
-      await setDoc(chapterRef, { isCompleted: true }, { merge: true });
-      console.log(`Chapter ${chap} completed and saved to Firestore.`);
-    } catch (error) {
-      console.error("Error saving chapter completion status:", error);
-    }
-  };
+  // const saveChapterCompletionStatus = async (subj, chap) => {
+  //   try {
+  //     const chapterRef = doc(db, "subjects", subj, "chapters", chap);
+  //     await setDoc(chapterRef, { isCompleted: true }, { merge: true });
+  //     console.log(`Chapter ${chap} completed and saved to Firestore.`);
+  //   } catch (error) {
+  //     console.error("Error saving chapter completion status:", error);
+  //   }
+  // };
 
-  const handleCompleteTest = () => {
-    setQuizFinished(true);
-    handleCompleteChapter(subject, chapter);
-  };
+  // const handleCompleteTest = () => {
+  //   setQuizFinished(true);
+  //   handleCompleteChapter(subject, chapter);
+  // };
 
 
   const currentQuestion =
