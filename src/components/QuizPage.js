@@ -169,7 +169,7 @@ export default function QuizPage() {
   const goToHomePage = () => {
     navigate("/"); // 返回首頁路徑
   };
-  
+
   // 設定章節完成
   // const handleCompleteChapter = (subj, chap) => {
   //   const updatedQuestionsData = { ...questionsData };
@@ -193,7 +193,6 @@ export default function QuizPage() {
   //   setQuizFinished(true);
   //   handleCompleteChapter(subject, chapter);
   // };
-
 
   const currentQuestion =
     questionsData[subject]?.[chapter]?.questions?.[currentIndex];
@@ -261,6 +260,15 @@ export default function QuizPage() {
                     下一題
                   </button>
                 </div>
+              )}
+              {/* 尚未作答也能略過（非最後一題時） */}
+              {!showAnswer && currentIndex < totalQuestions - 1 && (
+                <button
+                  onClick={nextQuestion}
+                  className="bg-gray-300 text-black px-4 py-2 rounded mt-4"
+                >
+                  略過此題
+                </button>
               )}
 
               {/* {showAnswer && isCorrect && (
