@@ -17,32 +17,37 @@ export default function QuizPage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [quizFinished, setQuizFinished] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false); // 用來標記是否回答正確
-  
-
-  // 讀取題目資料
-  const fetchQuestionsData = async () => {
-    try {
-      setLoading(true);
-
-      // 從指定的科目和章節讀取 wrongQuestions 集合
-      const wrongQuestionsSnapshot = await getDocs(
-        collection(db, "subjects", subject, "chapters", chapter, "wrongQuestions")
-      );
-
-      const wrongQuestionsData = [];
-      wrongQuestionsSnapshot.forEach((doc) => {
-        wrongQuestionsData.push(doc.data()); // 將錯誤題目資料儲存至陣列
-      });
-
-      setQuestionsData(wrongQuestionsData); // 設定錯誤的題目資料
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching wrong questions: ", error);
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    // 讀取題目資料
+    const fetchQuestionsData = async () => {
+      try {
+        setLoading(true);
+
+        // 從指定的科目和章節讀取 wrongQuestions 集合
+        const wrongQuestionsSnapshot = await getDocs(
+          collection(
+            db,
+            "subjects",
+            subject,
+            "chapters",
+            chapter,
+            "wrongQuestions"
+          )
+        );
+
+        const wrongQuestionsData = [];
+        wrongQuestionsSnapshot.forEach((doc) => {
+          wrongQuestionsData.push(doc.data()); // 將錯誤題目資料儲存至陣列
+        });
+
+        setQuestionsData(wrongQuestionsData); // 設定錯誤的題目資料
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching wrong questions: ", error);
+        setLoading(false);
+      }
+    };
     fetchQuestionsData();
   }, [subject, chapter]);
 
@@ -151,7 +156,7 @@ export default function QuizPage() {
   const goToHomePage = () => {
     navigate("/"); // 返回首頁路徑
   };
-  
+
   // 設定章節完成
   // const handleCompleteChapter = (subj, chap) => {
   //   const updatedQuestionsData = { ...questionsData };
@@ -199,78 +204,81 @@ export default function QuizPage() {
         </p>
         {loading ? (
           <p>正在加載錯誤題目...</p>
-        ) : questionsData.length > 0 ?(
+        ) : questionsData.length > 0 ? (
           !quizFinished ? (
             <>
-            <div>
-              <h2>{currentIndex + 1}.</h2>
-              <p>{currentQuestion?.question}</p>
               <div>
-                {currentQuestion?.options.map((opt, idx) => {
-                  const optionLetter = opt.split(".")[0]; // 取得選項的字母 A, B, C, D
-                  const correctAnswers = currentQuestion.answer.includes(",")
-                    ? currentQuestion.answer.split(",").map((ans) => ans.trim()) // 處理多個答案
-                    : [currentQuestion.answer]; // 單一正確答案
-
-                  const isCorrectAnswer = correctAnswers.includes(optionLetter); // 判斷是否是正確答案
-                  const isSelected = selected === optionLetter; // 判斷用戶選擇的選項
-
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => !showAnswer && checkAnswer(optionLetter)} // 傳遞字母
-                      className={`cursor-pointer p-2 border rounded mb-2 w-full text-left ${
-                        showAnswer
-                          ? isCorrectAnswer
-                            ? "bg-green-100" // 正確答案顯示綠色
-                            : isSelected
-                            ? "bg-red-100" // 錯誤答案顯示紅色
-                            : ""
-                          : ""
-                      }`}
-                    >
-                      {opt} {/* 顯示選項內容，包含 A, B, C, D */}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {showAnswer && !isCorrect && (
+                <h2>{currentIndex + 1}.</h2>
+                <p>{currentQuestion?.question}</p>
                 <div>
-                  <p>正確答案：{currentQuestion.answer}</p>
-                  <p>解析：{currentQuestion.explanation}</p>
-                  <button
-                    onClick={nextQuestion}
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
-                  >
-                    下一題
-                  </button>
-                </div>
-              )}
+                  {currentQuestion?.options.map((opt, idx) => {
+                    const optionLetter = opt.split(".")[0]; // 取得選項的字母 A, B, C, D
+                    const correctAnswers = currentQuestion.answer.includes(",")
+                      ? currentQuestion.answer
+                          .split(",")
+                          .map((ans) => ans.trim()) // 處理多個答案
+                      : [currentQuestion.answer]; // 單一正確答案
 
-              {/* {showAnswer && isCorrect && (
+                    const isCorrectAnswer =
+                      correctAnswers.includes(optionLetter); // 判斷是否是正確答案
+                    const isSelected = selected === optionLetter; // 判斷用戶選擇的選項
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => !showAnswer && checkAnswer(optionLetter)} // 傳遞字母
+                        className={`cursor-pointer p-2 border rounded mb-2 w-full text-left ${
+                          showAnswer
+                            ? isCorrectAnswer
+                              ? "bg-green-100" // 正確答案顯示綠色
+                              : isSelected
+                              ? "bg-red-100" // 錯誤答案顯示紅色
+                              : ""
+                            : ""
+                        }`}
+                      >
+                        {opt} {/* 顯示選項內容，包含 A, B, C, D */}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {showAnswer && !isCorrect && (
+                  <div>
+                    <p>正確答案：{currentQuestion.answer}</p>
+                    <p>解析：{currentQuestion.explanation}</p>
+                    <button
+                      onClick={nextQuestion}
+                      className="bg-blue-500 text-white px-4 py-2 rounded"
+                    >
+                      下一題
+                    </button>
+                  </div>
+                )}
+
+                {/* {showAnswer && isCorrect && (
                 setTimeout(() => {
                   nextQuestion();
                 }, 1000) // 1秒後自動跳到下一題
               )} */}
-            </div>
+              </div>
             </>
           ) : (
-          <div>
-            <h3>恭喜你完成了所有題目！</h3>
-            <button
-              onClick={viewWrongQuestions}
-              className="bg-yellow-500 text-white px-4 py-2 rounded"
-            >
-              查看錯題
-            </button>
-            <button
-              onClick={goToHomePage}
-              className="bg-yellow-500 text-white px-4 py-2 rounded"
-            >
-              回首頁
-            </button>
-          </div>
+            <div>
+              <h3>恭喜你完成了所有題目！</h3>
+              <button
+                onClick={viewWrongQuestions}
+                className="bg-yellow-500 text-white px-4 py-2 rounded"
+              >
+                查看錯題
+              </button>
+              <button
+                onClick={goToHomePage}
+                className="bg-yellow-500 text-white px-4 py-2 rounded"
+              >
+                回首頁
+              </button>
+            </div>
           )
         ) : (
           <p>目前沒有錯誤題目。</p>
